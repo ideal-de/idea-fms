@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mvc="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd">
+
+   <!-- 配置IOC的扫描路径-->
+    <context:component-scan base-package="com.javakc.fms">
+        <!--除了controller以外的实现类-->
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <!--读取连接数据库配置-->
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location" value="classpath:jdbc.properties"/>
+    </bean>
+
+    <!--配置apache dbcp2数据库连接-->
+    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource"
+          init-method="createDataSource" destroy-method="close">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="minIdle" value="${jdbc.minIdle}"/>
+        <property name="maxIdle" value="${jdbc.maxTotal}"/>
+    </bean>
+
+    <!--由IOC构建SQLSessionFactory-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!--注入数据源-->
+        <property name="dataSource" ref="dataSource"/>
+        <!--注入映射文件-->
+        <property name="mapperLocations" value="classpath:mapper/*.xml"/>
+        <!--动态提供对象别名-->
+       <property name="typeAliasesPackage" value="com.javakc.fms"/>
+    </bean>
+
+    <!--Mybatis和Spring的完美整合-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+       <!-- 数据层接口配置-->
+        <property name="basePackage" value="com.javakc.fms.*.dao"/>
+        <!--sqlSessionFactory注入-->
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+</beans>
